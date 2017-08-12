@@ -14,10 +14,15 @@
 
 process(Owner, Repository) ->
     Url = "https://api.github.com/repos/" ++ Owner ++ "/" ++ Repository ++ "/events",
-    process_url(Owner, Repository, Url, []).
+    Results = process_url(Owner, Repository, Url, []),
+    case length(Results) of
+        0 -> io:format("No issues found! Keep calm and avoid force-push...~n");
+        N -> io:format("Found ~p issue(s)!~n", [N])
+    end,
+    Results.
 
 process_url(Owner, Repository, Url, Acc) ->
-    io:format("+++ Querying: ~p~n", [Url]),
+    io:format("+++ Querying events URL: ~p~n", [Url]),
     handle_response(ibrowse:send_req(Url, http_utils:get_headers(), get), Owner, Repository, Acc).
 
 handle_response({ok, "200", RH, RB}, Owner, Repository, Acc) ->
@@ -26,7 +31,7 @@ handle_response({ok, "200", RH, RB}, Owner, Repository, Acc) ->
         fun(Event_Json, Mid_Acc) ->
             Event_Time = jsonpath:search(<<"created_at">>, Event_Json),
             Event_Id = jsonpath:search(<<"id">>, Event_Json),
-            Actor = jsonpath:search(<<"actor.login">>, Event_Json),
+            Actor = jsonpath:search(<<"actor.display_login">>, Event_Json),
             Event_Type = jsonpath:search(<<"type">>, Event_Json),
             io:format("[~p] ~p ~p by ~p~n", [Event_Time, Event_Id, Event_Type, Actor]),
             case Event_Type of
@@ -59,6 +64,5 @@ get_criteria_list() ->
     [
         criteria_no_commits,
         criteria_size_is_zero,
-        criteria_distinct_size_is_zero,
         criteria_time_travel
     ].

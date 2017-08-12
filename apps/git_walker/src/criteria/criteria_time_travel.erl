@@ -23,9 +23,16 @@ satisfies(Json, Params) ->
     New_Date = get_commit_timestamp(Owner, Repository, New_Head),
     Old_Date > New_Date.
 
-get_commit_timestamp(Owner, Repo, Commit_Sha) ->
-    Url = binary_to_list(iolist_to_binary(["https://api.github.com/repos/", Owner, "/", Repo, "/git/commits/", Commit_Sha])),
+get_commit_timestamp(Owner, Repository, Commit_Sha) ->
+    Lookup_Key = {Owner, Repository, Commit_Sha},
+    get_commit_timestamp_if_cache_miss(ugly_cache:lookup(Lookup_Key), Lookup_Key, Owner, Repository, Commit_Sha).
+
+get_commit_timestamp_if_cache_miss(Value,      _Lookup_Key, _Owner, _Repository, _Commit_Sha) when Value =/= undefined ->
+    Value;
+get_commit_timestamp_if_cache_miss(undefined,   Lookup_Key,  Owner,  Repository,  Commit_Sha) ->
+    Url = binary_to_list(iolist_to_binary(["https://api.github.com/repos/", Owner, "/", Repository, "/git/commits/", Commit_Sha])),
     {ok, "200", _RH, RB} = ibrowse:send_req(Url, http_utils:get_headers(), get),
     Commit_Json = jiffy:decode(RB),
-    {Date_Part, {HH, MM, SS, _MS}} = ec_date:parse(binary_to_list(jsonpath:search(<<"committer.date">>, Commit_Json))),
-    calendar:datetime_to_gregorian_seconds({Date_Part, {HH, MM, SS}}).
+    Parsed_Date = ec_date:parse(binary_to_list(jsonpath:search(<<"committer.date">>, Commit_Json))),
+    Val = calendar:datetime_to_gregorian_seconds(Parsed_Date),
+    ugly_cache:store(Lookup_Key, Val).

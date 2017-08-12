@@ -10,7 +10,9 @@
                 stdlib,
                 ibrowse,
                 erlware_commons,
-                ssl
+                ssl,
+                jiffy,
+                jsonpath
             ]},
         {env, []},
         {modules, []},

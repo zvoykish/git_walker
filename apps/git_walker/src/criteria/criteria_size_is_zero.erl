@@ -14,4 +14,4 @@
 %% API
 -export([satisfies/2]).
 
-satisfies(Json, _Params) -> jsonpath:search(<<"payload.size">>, Json).
+satisfies(Json, _Params) -> jsonpath:search(<<"payload.size">>, Json) =:= 0.
