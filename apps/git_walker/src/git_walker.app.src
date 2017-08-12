@@ -1,0 +1,22 @@
+{application, git_walker,
+    [
+        {description, "An OTP application"},
+        {vsn, "0.1.0"},
+        {registered, []},
+        {mod, {git_walker_app, []}},
+        {applications,
+            [
+                kernel,
+                stdlib,
+                ibrowse,
+                erlware_commons,
+                ssl
+            ]},
+        {env, []},
+        {modules, []},
+
+        {maintainers, []},
+        {licenses, []},
+        {links, []}
+    ]
+}.
